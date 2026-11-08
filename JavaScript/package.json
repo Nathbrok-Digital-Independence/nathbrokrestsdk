@@ -1,0 +1,21 @@
+{
+  "name": "nathbrokrestsdk",
+  "version": "1.0.0",
+  "description": "Server-side JavaScript SDK for Nathbrok REST APIs",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./auth": "./src/auth.js",
+    "./chat": "./src/chat.js",
+    "./cloud": "./src/cloud.js",
+    "./mail": "./src/mail.js",
+    "./dde": "./src/dde.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
