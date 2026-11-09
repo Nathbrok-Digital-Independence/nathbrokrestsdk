@@ -1,4 +1,4 @@
-# This workflow will upload a Python Package to PyPI when a release is created
+# This workflow will upload the Python package to PyPI when the SDK is pushed
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
 
 # This workflow uses actions that are not certified by GitHub.
@@ -6,11 +6,13 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Publish Python Package
 
 on:
-  release:
-    types: [published]
+  push:
+    paths:
+      - "nathbrokrestsdk/python/**"
+      - "nathbrokrestsdk/.github/workflows/python-publish.yml"
 
 permissions:
   contents: read
