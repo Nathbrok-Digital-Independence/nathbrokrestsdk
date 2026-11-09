@@ -1,6 +1,6 @@
 {
   "name": "nathbrokrestsdk",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Server-side JavaScript SDK for Nathbrok REST APIs",
   "type": "module",
   "engines": {
