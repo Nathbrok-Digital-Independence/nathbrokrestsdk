@@ -19,12 +19,11 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from .exceptions import NathbrokAPIError
 
-
-_DEFAULT_BASE_URL = "https://api-routes.nathbrok.com/sdk/v1"
+_SDK_VERSION = 1
+_DEFAULT_BASE_URL = f"https://api-routes.nathbrok.com/sdk/v{_SDK_VERSION}"
 _PAYLOAD_KEY_INFO = b"nathbrok-sdk-payload-aes256gcm-v1"
 _AAD = b"nathbrok-sdk-encrypted-request-v1"
 _ENVELOPE_ALGORITHM = "X25519-HKDF-SHA256+A256GCM"
-_SDK_VERSION = "1.0.0"
 
 
 class Auth:

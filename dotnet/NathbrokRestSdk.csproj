@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>NathbrokRestSdk</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Nathbrok</Authors>
+    <Description>Server-side .NET SDK for Nathbrok REST APIs.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Nathbrok-Digital-Independence/nathbrokrestsdk</RepositoryUrl>
+    <PackageTags>nathbrok;sdk;server-side</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -21,10 +21,11 @@ desktop applications.
 - **Python** — available in [`python/`](./python/).
 - **JavaScript for Node.js** — available in [`JavaScript/`](./JavaScript/).
   This is a server-side SDK, not a browser SDK.
+- **.NET / C#** — available in [`dotnet/`](./dotnet/).
 
 ## Possible future languages
 
-PHP, Java, C#, and Go are candidates for future server-side SDKs, depending on
+PHP, Java, and Go are candidates for future server-side SDKs, depending on
 developer and customer demand. They are not available yet, and no release
 schedule is committed.
 
