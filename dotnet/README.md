@@ -49,6 +49,23 @@ message encryption. `CloudClient` handles bucket files, and `MailClient` sends
 mail through an authorized mailbox. API failures throw
 `NathbrokApiException`, which exposes `StatusCode` and `Detail`.
 
-The DDE client mirrors the Python SDK wrapper, but DDE endpoints are not yet
-registered by the current SDK API server; those methods will fail until server
-support is added.
+`DDEClient` provides server-side data and file encryption/decryption through
+the SDK API. File responses include base64-encoded `content` and its output
+`filename`. DDE uses the server's stable `DDE_MASTER_KEY` by default. To use
+your own key, pass it as the `key` argument; the SDK sends it only inside an
+authenticated encrypted request, and the server does not store it. Decryption
+tries your supplied key first and then `DDE_MASTER_KEY`; if neither works, the
+API returns an error.
+
+```csharp
+var dde = new DDEClient(auth);
+var encrypted = await dde.EncryptDataAsync(
+    new JsonObject { ["account"] = "example" },
+    key: Environment.GetEnvironmentVariable("DDE_KEY"));
+var decrypted = await dde.DecryptDataAsync(
+    encrypted,
+    key: Environment.GetEnvironmentVariable("DDE_KEY"));
+```
+
+Files are processed in memory by the server. The SDK leaves the local source
+file unchanged, and the server does not keep a temporary output file.

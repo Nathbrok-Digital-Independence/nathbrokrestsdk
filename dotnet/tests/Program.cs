@@ -13,6 +13,7 @@ var checks = new (string Name, Action Run)[]
     ("P-256 room-key envelope round-trips", TestRoomEnvelope),
     ("Passphrase-protected chat key unlocks", TestUnlockPrivateKey),
     ("Chat message encrypts and decrypts", TestMessageRoundTrip),
+    ("DDE custom keys use encrypted authenticated requests", TestDdeCustomKeyRequest),
     ("Server base URLs initialize without duplicate SDK paths", TestBaseUrlValidation)
 };
 
@@ -136,6 +137,47 @@ static void TestMessageRoundTrip()
     Assert(plaintext == "hello from .NET", "The decrypted message did not match");
 }
 
+static void TestDdeCustomKeyRequest()
+{
+    var privateKey = new byte[32];
+    var publicKey = new byte[X25519.PointSize];
+    X25519.GeneratePrivateKey(new SecureRandom(), privateKey);
+    X25519.GeneratePublicKey(privateKey, 0, publicKey, 0);
+    var encodedServerKey = Convert.ToBase64String(publicKey)
+        .TrimEnd('=')
+        .Replace('+', '-')
+        .Replace('/', '_');
+    using var handler = new DdeCaptureHandler();
+    using var httpClient = new HttpClient(handler);
+    using var auth = new Auth(
+        "https://api.example.test/sdk/v1",
+        accessKeyId: "server-id",
+        secretKey: "test-secret",
+        httpClient: httpClient,
+        serverKey: encodedServerKey
+    );
+    var dde = new DDEClient(auth);
+    try
+    {
+        dde.EncryptDataAsync(
+            new JsonObject { ["message"] = "private" },
+            key: "customer-only-key"
+        ).GetAwaiter().GetResult();
+        throw new InvalidOperationException("Expected the fake response to fail decryption");
+    }
+    catch (NathbrokApiException)
+    {
+    }
+
+    Assert(handler.EncryptedRequest, "Custom DDE key request was not encrypted");
+    Assert(
+        !handler.RequestBody.Contains("customer-only-key", StringComparison.Ordinal),
+        "Custom DDE key appeared in the signed request body"
+    );
+    var envelope = JsonNode.Parse(handler.RequestBody)!.AsObject();
+    Assert(envelope.ContainsKey("ciphertext"), "Request body was not an encrypted envelope");
+}
+
 static void TestBaseUrlValidation()
 {
     using var rootUrl = new Auth("https://api.example.test");
@@ -171,6 +213,29 @@ static void Assert(bool condition, string message)
     if (!condition)
     {
         throw new InvalidOperationException(message);
+    }
+}
+
+sealed class DdeCaptureHandler : HttpMessageHandler
+{
+    internal bool EncryptedRequest { get; private set; }
+    internal string RequestBody { get; private set; } = "";
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
+    {
+        EncryptedRequest = request.Headers.TryGetValues(
+                "X-Nathbrok-Encrypted-Request",
+                out var values
+            )
+            && values.Single() == "true";
+        RequestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}")
+        };
     }
 }
 

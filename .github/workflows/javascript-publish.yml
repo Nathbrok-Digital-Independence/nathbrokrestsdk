@@ -65,4 +65,4 @@ jobs:
 
       - name: Stage package on npm with provenance
         working-directory: JavaScript
-        run: npm stage publish --access public --provenance
+        run: npm stage publish . --access public --provenance

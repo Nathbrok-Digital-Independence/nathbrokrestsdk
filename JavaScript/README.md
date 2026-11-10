@@ -82,6 +82,24 @@ is used only to unlock the sender's private key; it is not sent to Nathbrok.
 `deleteMessage`, and `deleteRoom`. `CloudClient` supports bucket/file
 operations, and `MailClient` supports plain-text and HTML messages.
 
-`DDEClient` mirrors the Python SDK's DDE request methods. The current SDK API
-does not register the DDE endpoints, so those calls will fail until server-side
-DDE API support is available.
+`DDEClient` provides server-side data and file encryption/decryption through
+the SDK API. File responses include base64-encoded `content` and its output
+`filename`. DDE uses the server's stable `DDE_MASTER_KEY` by default. To use
+your own key, pass it as the second argument; the SDK sends it only inside an
+authenticated encrypted request, and the server does not store it. Decryption
+tries your supplied key first and then `DDE_MASTER_KEY`; if neither works, the
+API returns an error.
+
+```js
+import { DDEClient } from "nathbrokrestsdk";
+
+const dde = new DDEClient(auth);
+const encrypted = await dde.encryptData(
+  { account: "example" },
+  process.env.DDE_KEY,
+);
+const decrypted = await dde.decryptData(encrypted, process.env.DDE_KEY);
+```
+
+Files are processed in memory by the server. The SDK leaves the local source
+file unchanged, and the server does not keep a temporary output file.

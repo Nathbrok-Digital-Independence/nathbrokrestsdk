@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { createServer } from "node:http";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   createCipheriv,
   createDecipheriv,
@@ -14,7 +17,7 @@ import {
   randomBytes,
 } from "node:crypto";
 import test from "node:test";
-import { Auth, ChatCryptoClient, NathbrokAPIError } from "../src/index.js";
+import { Auth, ChatCryptoClient, DDEClient, NathbrokAPIError } from "../src/index.js";
 import { MailClient } from "../src/mail.js";
 
 const PAYLOAD_KEY_INFO = Buffer.from("nathbrok-sdk-payload-aes256gcm-v1");
@@ -271,4 +274,54 @@ test("Chat cryptography unlocks private keys and round-trips room keys and messa
   assert.deepEqual(ChatCryptoClient.decryptRoomEnvelope(envelope, unlocked), roomKey);
   const message = ChatCryptoClient.encryptMessage("chat text", roomKey);
   assert.equal(ChatCryptoClient.decryptMessage(message, roomKey), "chat text");
+});
+
+test("DDE custom keys and files use authenticated encrypted requests", async () => {
+  const calls = [];
+  const auth = {
+    baseUrl: "https://api.example.test/sdk/v1",
+    async authorizedEncryptedRequest(method, url, options) {
+      calls.push({ encrypted: true, method, url, options });
+      return { data: "encrypted-data" };
+    },
+    async authorizedRequest(method, url, options) {
+      calls.push({ encrypted: false, method, url, options });
+      return { filename: "file.dde", content: "base64" };
+    },
+  };
+  const dde = new DDEClient(auth);
+  const customKey = "only-in-encrypted-request";
+
+  await dde.encryptData({ message: "private" }, customKey);
+  assert.equal(calls[0].encrypted, true);
+  assert.equal(calls[0].method, "POST");
+  assert.deepEqual(calls[0].options.json, {
+    data: { message: "private" },
+    key: customKey,
+  });
+
+  await dde.decryptData({ data: "ciphertext" }, customKey);
+  assert.equal(calls[1].encrypted, true);
+  assert.deepEqual(calls[1].options.json, { data: "ciphertext", key: customKey });
+
+  const directory = await mkdtemp(join(tmpdir(), "nathbrok-dde-"));
+  const filePath = join(directory, "sample.bin");
+  const fileContent = Buffer.from([0, 1, 2, 255]);
+  try {
+    await writeFile(filePath, fileContent);
+    await dde.encryptFile(filePath, customKey);
+    assert.equal(calls[2].encrypted, true);
+    assert.deepEqual(calls[2].options.json, {
+      filename: "sample.bin",
+      content: fileContent.toString("base64"),
+      key: customKey,
+    });
+    assert.deepEqual(await readFile(filePath), fileContent);
+
+    await dde.encryptFile(filePath);
+    assert.equal(calls[3].encrypted, false);
+    assert.deepEqual(calls[3].options.files.file.content, fileContent);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

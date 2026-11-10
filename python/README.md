@@ -120,6 +120,26 @@ unlock key material and should not be sent to the API.
 - `nathbrokrestsdk.mail.MailClient` sends email through an authorized mailbox.
 - `nathbrokrestsdk.dde.DDEClient` requests file and data encryption/decryption.
 
+The DDE data methods encrypt/decrypt JSON objects. File methods return the
+output filename and file content encoded as base64.
+
+By default, DDE uses the server's stable `DDE_MASTER_KEY`. To use your own
+key, pass it as the `key` keyword argument; custom keys are sent only inside
+the SDK's authenticated encrypted request and are never stored by the server.
+During decryption, Nathbrok tries the supplied key first, then the configured
+`DDE_MASTER_KEY`. If neither decrypts the value, the API returns an error.
+
+```python
+from nathbrokrestsdk.dde import DDEClient
+
+dde = DDEClient(auth)
+encrypted = dde.encrypt_data({"account": "example"}, key=os.environ["DDE_KEY"])
+decrypted = dde.decrypt_data(encrypted, key=os.environ["DDE_KEY"])
+```
+
+File contents are processed in memory by the server. The SDK leaves the local
+source file unchanged, and the server does not keep a temporary output file.
+
 `MailClient` accepts an initialized `Auth` instance:
 
 ```python
