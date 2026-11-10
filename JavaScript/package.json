@@ -7,7 +7,7 @@
   "engines": {
     "node": ">=20"
   },
-  "files": ["README.md", "LICENSE"],
+  "files": ["src/", "README.md", "LICENSE"],
   "exports": {
     ".": "./src/index.js",
     "./auth": "./src/auth.js",
@@ -16,7 +16,10 @@
     "./mail": "./src/mail.js",
     "./dde": "./src/dde.js"
   },
-   "repository": { "type": "git", "url": "git+https://github.com/Nathbrok-Digital-Independence/nathbrokrestsdk.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nathbrok-Digital-Independence/nathbrokrestsdk.git"
+  },
   "scripts": {
     "test": "node --test"
   },

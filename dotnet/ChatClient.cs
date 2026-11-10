@@ -5,19 +5,23 @@ using System.Text.Json.Nodes;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Creates rooms and sends messages through Nathbrok chat.</summary>
 public sealed class ChatClient
 {
     private readonly Auth _auth;
     private readonly Dictionary<int, (byte[] RoomKey, int KeyVersionId)> _roomKeys = [];
 
+    /// <summary>Creates a chat client using the provided authentication client.</summary>
     public ChatClient(Auth? auth = null)
     {
         _auth = auth ?? new Auth();
         Crypto = new ChatCryptoClient(_auth);
     }
 
+    /// <summary>Gets the chat key and message cryptography operations.</summary>
     public ChatCryptoClient Crypto { get; }
 
+    /// <summary>Encrypts and sends a message to a chat room.</summary>
     public async Task<JsonObject> SendMessageAsync(
         IReadOnlyList<string> message,
         int roomId,
@@ -57,6 +61,7 @@ public sealed class ChatClient
         ).ConfigureAwait(false);
     }
 
+    /// <summary>Creates a room and distributes its encrypted room key to participants.</summary>
     public async Task<JsonObject> CreateRoomAsync(
         string name,
         IReadOnlyList<string> users,
@@ -151,6 +156,7 @@ public sealed class ChatClient
         return response;
     }
 
+    /// <summary>Retrieves and unlocks a room key for the specified user.</summary>
     public async Task<byte[]> UnlockRoomAsync(
         int roomId,
         string passphrase,
@@ -169,18 +175,21 @@ public sealed class ChatClient
         return roomKey;
     }
 
+    /// <summary>Encrypts a message using a room key already held by this client.</summary>
     public JsonObject EncryptMessage(int roomId, string plaintext)
     {
         var room = GetRoom(roomId);
         return ChatCryptoClient.EncryptMessage(plaintext, room.RoomKey);
     }
 
+    /// <summary>Decrypts a message using a room key already held by this client.</summary>
     public string DecryptMessage(int roomId, JsonObject encryptedMessage)
     {
         var room = GetRoom(roomId);
         return ChatCryptoClient.DecryptMessage(encryptedMessage, room.RoomKey);
     }
 
+    /// <summary>Deletes a chat message by its identifier.</summary>
     public Task<JsonObject> DeleteMessageAsync(int messageId, CancellationToken cancellationToken = default)
     {
         ChatCryptoClient.ValidateRoomId(messageId, nameof(messageId));
@@ -191,6 +200,7 @@ public sealed class ChatClient
         );
     }
 
+    /// <summary>Deletes a room by name or room identifier.</summary>
     public Task<JsonObject> DeleteRoomAsync(
         string? name = null,
         int? roomId = null,

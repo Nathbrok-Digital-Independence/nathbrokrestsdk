@@ -6,31 +6,18 @@ on the server; do not include them in browser code.
 
 ## Requirements
 
-- .NET 8 or later
+- .NET 10 is recommended. The package also targets .NET 8 for existing
+  applications that still require it; .NET 8 reached end of support on
+  November 10, 2026.
 - An institution account with a registered Nathbrok Server and its Access key
   ID, one-time Access key, and signing secret
 
 ## Install
 
-From the SDK repository root, build the NuGet package:
+Install the SDK into your .NET server project:
 
 ```shell
-dotnet pack .\dotnet\NathbrokRestSdk.csproj -c Release
-```
-
-The package file is `dotnet\bin\Release\NathbrokRestSdk.1.0.3.nupkg`.
-It is not available from nuget.org until it has been published. To install this
-local package into a server project, run the following from that project's
-directory, replacing the path with the location of this SDK checkout:
-
-```shell
-dotnet add package NathbrokRestSdk --version 1.0.3 --source "C:\path\to\nathbrokrestsdk\dotnet\bin\Release"
-```
-
-After the package is published to nuget.org, install it with:
-
-```shell
-dotnet add package NathbrokRestSdk --version 1.0.3
+dotnet add package NathbrokRestSdk
 ```
 
 ## Authenticate and use clients

@@ -3,25 +3,30 @@ using System.Text.Json.Nodes;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Provides wrappers for Nathbrok's DDE API operations.</summary>
 public sealed class DDEClient
 {
     private readonly Auth _auth;
 
+    /// <summary>Creates a DDE client using the provided authentication client.</summary>
     public DDEClient(Auth? auth = null)
     {
         _auth = auth ?? new Auth();
     }
 
+    /// <summary>Requests encryption of a local file.</summary>
     public Task<JsonObject> EncryptFileAsync(
         string filePath,
         CancellationToken cancellationToken = default
     ) => SendFileAsync(HttpMethod.Post, filePath, cancellationToken);
 
+    /// <summary>Requests decryption of a local file.</summary>
     public Task<JsonObject> DecryptFileAsync(
         string filePath,
         CancellationToken cancellationToken = default
     ) => SendFileAsync(HttpMethod.Get, filePath, cancellationToken);
 
+    /// <summary>Requests encryption of JSON data.</summary>
     public Task<JsonObject> EncryptDataAsync(
         JsonObject data,
         CancellationToken cancellationToken = default
@@ -32,6 +37,7 @@ public sealed class DDEClient
         cancellationToken: cancellationToken
     );
 
+    /// <summary>Requests decryption of JSON data.</summary>
     public Task<JsonObject> DecryptDataAsync(
         JsonObject data,
         CancellationToken cancellationToken = default

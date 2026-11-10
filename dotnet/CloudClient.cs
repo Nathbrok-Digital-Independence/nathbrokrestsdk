@@ -4,15 +4,18 @@ using System.Text.Json.Nodes;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Manages files and buckets in Nathbrok cloud storage.</summary>
 public sealed class CloudClient
 {
     private readonly Auth _auth;
 
+    /// <summary>Creates a cloud-storage client using the provided authentication client.</summary>
     public CloudClient(Auth? auth = null)
     {
         _auth = auth ?? new Auth();
     }
 
+    /// <summary>Uploads a local file to a bucket, optionally within a folder.</summary>
     public async Task<JsonObject> UploadFileAsync(
         string bucketId,
         string filePath,
@@ -51,6 +54,7 @@ public sealed class CloudClient
         ).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes a cloud file by its identifier.</summary>
     public Task<JsonObject> DeleteFileAsync(int fileId, CancellationToken cancellationToken = default)
     {
         ChatCryptoClient.ValidateRoomId(fileId, nameof(fileId));
@@ -62,6 +66,7 @@ public sealed class CloudClient
         );
     }
 
+    /// <summary>Requests a download link for a cloud file.</summary>
     public Task<JsonObject> GenerateFileDownloadLinkAsync(
         int fileId,
         CancellationToken cancellationToken = default
@@ -76,6 +81,7 @@ public sealed class CloudClient
         );
     }
 
+    /// <summary>Creates a storage bucket with the specified quota and name.</summary>
     public Task<JsonObject> CreateBucketAsync(
         long quota,
         string name,
@@ -98,6 +104,7 @@ public sealed class CloudClient
         );
     }
 
+    /// <summary>Deletes a storage bucket by its identifier.</summary>
     public Task<JsonObject> DeleteBucketAsync(
         string bucketId,
         CancellationToken cancellationToken = default

@@ -14,16 +14,10 @@ This package uses Node.js built-ins and has no runtime dependencies.
 
 ## Install
 
-From this directory:
+Install the SDK in your Node.js backend project:
 
 ```shell
-npm install
-```
-
-Or install the package from a local checkout:
-
-```shell
-npm install .\path\to\nathbrokrestsdk\javascript
+npm install nathbrokrestsdk
 ```
 
 ## Authenticate
@@ -91,11 +85,3 @@ operations, and `MailClient` supports plain-text and HTML messages.
 `DDEClient` mirrors the Python SDK's DDE request methods. The current SDK API
 does not register the DDE endpoints, so those calls will fail until server-side
 DDE API support is available.
-
-## Development
-
-Run the built-in Node.js tests:
-
-```shell
-npm test
-```

@@ -6,12 +6,15 @@ using System.Text.Json.Nodes;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Authenticates and sends requests to Nathbrok's server-side SDK API.</summary>
 public sealed class Auth : IDisposable
 {
+    /// <summary>The default base URL for the Nathbrok SDK API.</summary>
     public const string DefaultBaseUrl = "https://api-routes.nathbrok.com/sdk/v1";
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
 
+    /// <summary>Creates an authentication client for a Nathbrok server.</summary>
     public Auth(
         string baseUrl = DefaultBaseUrl,
         string? accessKeyId = null,
@@ -49,14 +52,22 @@ public sealed class Auth : IDisposable
         _ownsHttpClient = httpClient is null;
     }
 
+    /// <summary>Gets the base URL used for API requests.</summary>
     public string BaseUrl { get; }
+    /// <summary>Gets the initialized server access-key ID.</summary>
     public string? AccessKeyId { get; private set; }
+    /// <summary>Gets the initialized server access key.</summary>
     public string? AccessKey { get; private set; }
+    /// <summary>Gets the initialized request-signing secret.</summary>
     public string? SecretKey { get; private set; }
+    /// <summary>Gets the server's X25519 public key after initialization.</summary>
     public string? ServerKey { get; private set; }
+    /// <summary>Gets the server user identifier returned during initialization.</summary>
     public string? ServerUser { get; private set; }
+    /// <summary>Gets the HTTP request timeout.</summary>
     public TimeSpan Timeout { get; }
 
+    /// <summary>Creates the signature headers for an HTTP request.</summary>
     public (string Signature, string Timestamp, string Nonce) GenerateSignature(
         HttpMethod method,
         Uri url,
@@ -87,6 +98,7 @@ public sealed class Auth : IDisposable
         return (signature, timestamp, nonce);
     }
 
+    /// <summary>Initializes the server credentials and retrieves the server encryption key.</summary>
     public async Task<JsonObject> InitializeAsync(
         string accessKeyId,
         string accessKey,
@@ -134,6 +146,7 @@ public sealed class Auth : IDisposable
         return payload;
     }
 
+    /// <summary>Sends a signed, unencrypted request to the API.</summary>
     public async Task<JsonObject> AuthorizedRequestAsync(
         HttpMethod method,
         string url,
@@ -168,6 +181,7 @@ public sealed class Auth : IDisposable
         ).ConfigureAwait(false);
     }
 
+    /// <summary>Sends a signed and encrypted request to the API.</summary>
     public Task<JsonObject> AuthorizedEncryptedRequestAsync(
         HttpMethod method,
         string url,
@@ -196,6 +210,7 @@ public sealed class Auth : IDisposable
         );
     }
 
+    /// <summary>Creates an encrypted single sign-on authorization URL for an email address.</summary>
     public async Task<string> CreateSsoUrlAsync(string email, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -216,6 +231,7 @@ public sealed class Auth : IDisposable
         return ssoUrl;
     }
 
+    /// <summary>Encrypts data for the initialized server.</summary>
     public byte[] EncryptData(byte[] data)
     {
         if (string.IsNullOrWhiteSpace(ServerKey))
@@ -344,6 +360,7 @@ public sealed class Auth : IDisposable
         return payload;
     }
 
+    /// <summary>Releases the HTTP client if this instance created it.</summary>
     public void Dispose()
     {
         if (_ownsHttpClient)

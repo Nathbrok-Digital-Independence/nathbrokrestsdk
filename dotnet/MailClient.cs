@@ -2,15 +2,18 @@ using System.Text.Json.Nodes;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Sends email through an authorized Nathbrok mailbox.</summary>
 public sealed class MailClient
 {
     private readonly Auth _auth;
 
+    /// <summary>Creates a mail client using the provided authentication client.</summary>
     public MailClient(Auth auth)
     {
         _auth = auth ?? throw new ArgumentNullException(nameof(auth));
     }
 
+    /// <summary>Sends an email through an authorized Nathbrok mailbox.</summary>
     public Task<JsonObject> SendEmailAsync(
         JsonObject emailData,
         string mailbox,

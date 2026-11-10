@@ -5,15 +5,18 @@ using System.Text.Json;
 
 namespace NathbrokRestSdk;
 
+/// <summary>Fetches chat key material and encrypts or decrypts chat data locally.</summary>
 public sealed class ChatCryptoClient
 {
     private readonly Auth _auth;
 
+    /// <summary>Creates chat cryptography operations using the provided authentication client.</summary>
     public ChatCryptoClient(Auth auth)
     {
         _auth = auth ?? throw new ArgumentNullException(nameof(auth));
     }
 
+    /// <summary>Fetches a user's public key and encrypted private-key material.</summary>
     public async Task<JsonObject> FetchUserKeyMaterialAsync(
         string user,
         CancellationToken cancellationToken = default
@@ -37,8 +40,10 @@ public sealed class ChatCryptoClient
         return result;
     }
 
+    /// <summary>Generates a cryptographically random 256-bit room key.</summary>
     public static byte[] GenerateRoomKey() => RandomNumberGenerator.GetBytes(32);
 
+    /// <summary>Unlocks a user's P-256 private key from its passphrase-protected key material.</summary>
     public static ECDiffieHellman UnlockKey(
         string passphrase,
         string iv,
@@ -115,6 +120,7 @@ public sealed class ChatCryptoClient
         return privateKey;
     }
 
+    /// <summary>Unlocks a user's private key from the key-material response.</summary>
     public static ECDiffieHellman UnlockUserKey(string passphrase, JsonObject keyMaterial)
     {
         ArgumentNullException.ThrowIfNull(keyMaterial);
@@ -141,6 +147,7 @@ public sealed class ChatCryptoClient
         );
     }
 
+    /// <summary>Fetches the encrypted room-key envelope for a user.</summary>
     public async Task<JsonObject> FetchRoomEnvelopeAsync(
         int roomId,
         string user,
@@ -158,6 +165,7 @@ public sealed class ChatCryptoClient
             : throw new InvalidDataException("The SDK response did not contain a room-key envelope");
     }
 
+    /// <summary>Encrypts a room key for a recipient's public key.</summary>
     public static JsonObject CreateRoomEnvelope(byte[] roomKey, string recipientPublicKey, int recipientId)
     {
         if (roomKey.Length != 32)
@@ -188,6 +196,7 @@ public sealed class ChatCryptoClient
         };
     }
 
+    /// <summary>Fetches and decrypts a room key for a user.</summary>
     public async Task<(byte[] RoomKey, int KeyVersionId)> UnlockRoomKeyAsync(
         int roomId,
         string user,
@@ -206,6 +215,7 @@ public sealed class ChatCryptoClient
         return (roomKey, keyVersionId);
     }
 
+    /// <summary>Decrypts a room-key envelope using the recipient's private key.</summary>
     public static byte[] DecryptRoomEnvelope(JsonObject envelope, ECDiffieHellman privateKey)
     {
         ArgumentNullException.ThrowIfNull(envelope);
@@ -241,6 +251,7 @@ public sealed class ChatCryptoClient
             : throw new CryptographicException("Decrypted room key must contain exactly 32 bytes");
     }
 
+    /// <summary>Encrypts UTF-8 message text with a room key.</summary>
     public static JsonObject EncryptMessage(string plaintext, byte[] roomKey)
     {
         if (roomKey.Length != 32)
@@ -256,6 +267,7 @@ public sealed class ChatCryptoClient
         };
     }
 
+    /// <summary>Decrypts a message encrypted with a room key.</summary>
     public static string DecryptMessage(JsonObject encryptedMessage, byte[] roomKey)
     {
         if (roomKey.Length != 32)
