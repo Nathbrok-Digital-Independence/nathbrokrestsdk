@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "nathbrokrestsdk",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Server-side JavaScript SDK for Nathbrok REST APIs",
   "type": "module",
   "engines": {
