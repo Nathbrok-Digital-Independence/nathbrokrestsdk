@@ -33,6 +33,12 @@ await auth.InitializeAsync(
     Environment.GetEnvironmentVariable("NATHBROK_SECRET_KEY")!);
 
 var mail = new MailClient(auth);
+await mail.CreateMailboxAsync(
+    "owner@example.com",
+    "team@nathbrok.com",
+    authorizedUsers: ["delegate@example.com"],
+    password: Environment.GetEnvironmentVariable("NATHBROK_MAILBOX_PASSWORD"));
+
 await mail.SendEmailAsync(
     new JsonObject
     {
@@ -48,6 +54,10 @@ await mail.SendEmailAsync(
 message encryption. `CloudClient` handles bucket files, and `MailClient` sends
 mail through an authorized mailbox. API failures throw
 `NathbrokApiException`, which exposes `StatusCode` and `Detail`.
+Mailbox creation requires an email domain verified for the institution (or the
+Nathbrok domain), and the selected user and authorized users must be linked to
+the server owner. The optional mailbox password must be at least 12 characters
+and is sent only in an authenticated encrypted request.
 
 `DDEClient` provides server-side data and file encryption/decryption through
 the SDK API. File responses include base64-encoded `content` and its output

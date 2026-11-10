@@ -233,6 +233,46 @@ test("MailClient sends validated JSON through the signed API client", async (t) 
   );
 });
 
+test("MailClient creates mailboxes with encrypted requests and validates inputs", async () => {
+  const calls = [];
+  const auth = {
+    baseUrl: "https://api.example.test/sdk/v1/",
+    authorizedRequest() {},
+    async authorizedEncryptedRequest(...args) {
+      calls.push(args);
+      return { id: 42, status: "created" };
+    },
+  };
+  const mail = new MailClient(auth);
+  assert.deepEqual(
+    await mail.createMailbox(" owner@example.test ", " mailbox@nathbrok.com ", {
+      authorizedUsers: ["delegate@example.test"],
+      password: "long-enough-password",
+    }),
+    { id: 42, status: "created" },
+  );
+  assert.deepEqual(calls, [
+    [
+      "POST",
+      "https://api.example.test/sdk/v1/mail/create/",
+      {
+        json: {
+          email: "mailbox@nathbrok.com",
+          user: "owner@example.test",
+          authorized_users: ["delegate@example.test"],
+          password: "long-enough-password",
+        },
+      },
+    ],
+  ]);
+  await assert.rejects(mail.createMailbox("not-an-email", "mailbox@example.test"));
+  await assert.rejects(
+    mail.createMailbox("owner@example.test", "mailbox@example.test", {
+      password: "short",
+    }),
+  );
+});
+
 test("Chat cryptography unlocks private keys and round-trips room keys and messages", () => {
   const passphrase = "a local passphrase";
   const { privateKey, publicKey } = generateKeyPairSync("ec", {

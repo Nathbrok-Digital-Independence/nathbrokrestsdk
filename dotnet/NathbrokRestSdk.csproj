@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>NathbrokRestSdk</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Nathbrok</Authors>
     <Description>Server-side .NET SDK for Nathbrok REST APIs.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>

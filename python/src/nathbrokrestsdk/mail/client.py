@@ -1,6 +1,9 @@
 import json
+import re
 from typing import Any
 from ..auth import Auth
+
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class MailClient:
@@ -10,6 +13,51 @@ class MailClient:
         if not callable(getattr(auth, "authorized_request", None)):
             raise TypeError("auth must provide an authorized_request method")
         self.auth = auth
+
+    def create_mailbox(
+        self,
+        user: str,
+        email: str,
+        authorized_users: list[str] | None = None,
+        password: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a mailbox for a linked user using an encrypted request."""
+        self._validate_email(user, "user")
+        self._validate_email(email, "email")
+        if authorized_users is None:
+            authorized_users = []
+        if not isinstance(authorized_users, list):
+            raise TypeError("authorized_users must be a list of email addresses")
+        for authorized_user in authorized_users:
+            self._validate_email(authorized_user, "authorized_users entry")
+        if password is not None and (
+            not isinstance(password, str)
+            or not password.strip()
+            or not 12 <= len(password) <= 1024
+        ):
+            raise ValueError("password must be between 12 and 1024 characters")
+        encrypted_request = getattr(self.auth, "authorized_encrypted_request", None)
+        if not callable(encrypted_request):
+            raise TypeError("auth must provide an authorized_encrypted_request method")
+
+        payload = {
+            "email": email.strip(),
+            "user": user.strip(),
+            "authorized_users": [address.strip() for address in authorized_users],
+            "password": password,
+        }
+        return encrypted_request(
+            method="POST",
+            url=f"{self.auth.base_url.rstrip('/')}/mail/create/",
+            json=payload,
+        )
+
+    @staticmethod
+    def _validate_email(value: str, field: str) -> None:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field} must be a valid email address")
+        if not _EMAIL_PATTERN.fullmatch(value.strip()):
+            raise ValueError(f"{field} must be a valid email address")
 
     def send_email(
         self,

@@ -52,6 +52,11 @@ const chat = new ChatClient(auth);
 const cloud = new CloudClient(auth);
 const mail = new MailClient(auth);
 
+await mail.createMailbox("owner@example.com", "team@nathbrok.com", {
+  authorizedUsers: ["delegate@example.com"],
+  password: process.env.NATHBROK_MAILBOX_PASSWORD,
+});
+
 await mail.sendEmail(
   { subject: "Hello", body_text: "Sent with Nathbrok." },
   "sender@example.com",
@@ -81,6 +86,10 @@ is used only to unlock the sender's private key; it is not sent to Nathbrok.
 `ChatClient` also provides `unlockRoom`, `encryptMessage`, `decryptMessage`,
 `deleteMessage`, and `deleteRoom`. `CloudClient` supports bucket/file
 operations, and `MailClient` supports plain-text and HTML messages.
+Mailbox creation requires an email domain verified for the institution (or the
+Nathbrok domain), and the selected user and authorized users must be linked to
+the server owner. The optional mailbox password must be at least 12 characters
+and is sent only in an authenticated encrypted request.
 
 `DDEClient` provides server-side data and file encryption/decryption through
 the SDK API. File responses include base64-encoded `content` and its output

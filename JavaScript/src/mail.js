@@ -1,9 +1,47 @@
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export class MailClient {
   constructor(auth) {
     if (typeof auth?.authorizedRequest !== "function") {
       throw new TypeError("auth must provide an authorizedRequest method");
     }
     this.auth = auth;
+  }
+
+  async createMailbox(user, email, { authorizedUsers = [], password } = {}) {
+    this.#validateEmail(user, "user");
+    this.#validateEmail(email, "email");
+    if (!Array.isArray(authorizedUsers)) {
+      throw new TypeError("authorizedUsers must be an array of email addresses");
+    }
+    for (const authorizedUser of authorizedUsers) {
+      this.#validateEmail(authorizedUser, "authorizedUsers entry");
+    }
+    if (
+      password !== undefined &&
+      (typeof password !== "string" ||
+        !password.trim() ||
+        password.length < 12 ||
+        password.length > 1024)
+    ) {
+      throw new TypeError("password must be between 12 and 1024 characters");
+    }
+    if (typeof this.auth.authorizedEncryptedRequest !== "function") {
+      throw new TypeError("auth must provide an authorizedEncryptedRequest method");
+    }
+
+    return this.auth.authorizedEncryptedRequest(
+      "POST",
+      `${this.auth.baseUrl.replace(/\/+$/, "")}/mail/create/`,
+      {
+        json: {
+          email: email.trim(),
+          user: user.trim(),
+          authorized_users: authorizedUsers.map((address) => address.trim()),
+          password: password ?? null,
+        },
+      },
+    );
   }
 
   async sendEmail(emailData, mailbox, to, { cc = [], bcc = [] } = {}) {
@@ -54,6 +92,12 @@ export class MailClient {
     }
     if (!recipients.every((address) => typeof address === "string" && address.trim())) {
       throw new TypeError(`${field} entries must be non-empty email addresses`);
+    }
+  }
+
+  #validateEmail(value, field) {
+    if (typeof value !== "string" || !EMAIL_PATTERN.test(value.trim())) {
+      throw new TypeError(`${field} must be a valid email address`);
     }
   }
 }

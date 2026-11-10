@@ -146,12 +146,23 @@ source file unchanged, and the server does not keep a temporary output file.
 from nathbrokrestsdk.mail import MailClient
 
 mail = MailClient(auth)
+mailbox = mail.create_mailbox(
+    user="owner@example.com",
+    email="team@nathbrok.com",
+    authorized_users=["delegate@example.com"],
+    password=os.environ["NATHBROK_MAILBOX_PASSWORD"],
+)
 result = mail.send_email(
     {"subject": "Hello", "body_text": "Sent with Nathbrok."},
     mailbox="sender@example.com",
     to="recipient@example.com",
 )
 ```
+
+Mailbox creation requires an email domain verified for the institution (or the
+Nathbrok domain), and the selected user and authorized users must be linked to
+the server owner. The optional mailbox password must be at least 12 characters
+and is sent only in an authenticated encrypted request.
 
 All clients return decoded JSON response data. Consult the Nathbrok SDK
 documentation for endpoint permissions and account setup:

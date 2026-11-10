@@ -14,6 +14,8 @@ var checks = new (string Name, Action Run)[]
     ("Passphrase-protected chat key unlocks", TestUnlockPrivateKey),
     ("Chat message encrypts and decrypts", TestMessageRoundTrip),
     ("DDE custom keys use encrypted authenticated requests", TestDdeCustomKeyRequest),
+    ("Mailbox creation sends encrypted mailbox data", TestMailboxCreationRequest),
+    ("Mailbox creation validates email and password inputs", TestMailboxValidation),
     ("Server base URLs initialize without duplicate SDK paths", TestBaseUrlValidation)
 };
 
@@ -45,6 +47,10 @@ static void TestAuthRoundTrip()
         new JsonObject { ["message"] = "private" }
     ).GetAwaiter().GetResult();
     Assert(payload["ok"]!.GetValue<bool>(), "Encrypted response was not decoded");
+    Assert(
+        handler.DecryptedPayload?["message"]?.GetValue<string>() == "private",
+        "Encrypted request content did not decrypt"
+    );
 }
 
 static void TestSignature()
@@ -186,6 +192,66 @@ static void TestBaseUrlValidation()
     Assert(sdkUrl.BaseUrl == "https://api.example.test/sdk/v1", "SDK base URL changed unexpectedly");
 }
 
+static void TestMailboxValidation()
+{
+    using var auth = new Auth("https://api.example.test/sdk/v1");
+    var mail = new MailClient(auth);
+    try
+    {
+        _ = mail.CreateMailboxAsync("invalid-email", "mailbox@example.test");
+        throw new InvalidOperationException("Invalid user email was accepted");
+    }
+    catch (ArgumentException)
+    {
+    }
+
+    try
+    {
+        _ = mail.CreateMailboxAsync(
+            "owner@example.test",
+            "mailbox@example.test",
+            password: "short"
+        );
+        throw new InvalidOperationException("Short mailbox password was accepted");
+    }
+    catch (ArgumentException exception) when (exception.Message.Contains("password"))
+    {
+    }
+}
+
+static void TestMailboxCreationRequest()
+{
+    using var handler = new FakeNathbrokHandler();
+    using var httpClient = new HttpClient(handler);
+    using var auth = new Auth(
+        "https://api.example.test/sdk/v1",
+        timeout: TimeSpan.FromSeconds(5),
+        httpClient: httpClient
+    );
+    auth.InitializeAsync(
+        "server-id",
+        "one-time-key",
+        "test-signing-secret"
+    ).GetAwaiter().GetResult();
+
+    var mail = new MailClient(auth);
+    var result = mail.CreateMailboxAsync(
+        "owner@example.test",
+        "team@nathbrok.com",
+        ["delegate@example.test"],
+        "long-enough-password"
+    ).GetAwaiter().GetResult();
+    Assert(result["ok"]!.GetValue<bool>(), "Mailbox creation response was not decoded");
+    Assert(
+        handler.DecryptedPayload?["email"]?.GetValue<string>() == "team@nathbrok.com",
+        "Mailbox email was not sent in the encrypted request"
+    );
+    Assert(
+        handler.DecryptedPayload?["password"]?.GetValue<string>() == "long-enough-password",
+        "Mailbox password was not sent in the encrypted request"
+    );
+}
+
 static byte[] EncryptAesGcm(byte[] key, byte[] iv, byte[] plaintext)
 {
     var ciphertext = new byte[plaintext.Length];
@@ -246,6 +312,7 @@ sealed class FakeNathbrokHandler : HttpMessageHandler
         private const string ResponseAad = "nathbrok-sdk-encrypted-response-v1";
         private readonly byte[] _serverPrivateKey = new byte[32];
         private readonly byte[] _serverPublicKey = new byte[32];
+        internal JsonObject? DecryptedPayload { get; private set; }
 
         private static void Check(bool condition, string message)
         {
@@ -305,10 +372,7 @@ sealed class FakeNathbrokHandler : HttpMessageHandler
                 ciphertextAndTag,
                 Encoding.ASCII.GetBytes(RequestAad)
             );
-            Check(
-                JsonNode.Parse(plaintext)!["message"]!.GetValue<string>() == "private",
-                "Encrypted request content did not decrypt"
-            );
+            DecryptedPayload = JsonNode.Parse(plaintext)!.AsObject();
 
             var responsePrivateKey = new byte[32];
             var responsePublicKey = new byte[32];
