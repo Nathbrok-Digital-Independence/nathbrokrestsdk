@@ -3,7 +3,7 @@ name: Publish JavaScript Package
 on:
   push:
     tags:
-      - "javascript-v*"
+      - "nathchat-v*"
 
 permissions:
   contents: read
