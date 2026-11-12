@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>MOCK NathChat embed (demo only)</title>
+<style>body{font:14px system-ui;margin:16px}input,button{display:block;margin:8px 0;padding:8px;width:100%}</style>
+<p><strong>DEMO ONLY.</strong> The real login form lives on your NathChat server, never in the host page.</p>
+<form id="f">
+  <input id="n" placeholder="NathLink" autocomplete="username">
+  <input id="s" type="password" placeholder="Secret" autocomplete="current-password">
+  <button>Sign in</button>
+</form>
+<script>
+  const parent = new URLSearchParams(location.search).get("parent");
+  const send = (type, extra = {}) => window.parent.postMessage({ ns: "nathchat", v: 1, type, ...extra }, parent);
+  addEventListener("message", (e) => {
+    if (e.source !== window.parent || e.origin !== parent) return;
+  });
+  send("ready");
+  document.getElementById("f").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const handle = document.getElementById("n").value.trim();
+    if (handle) { send("login", { nathlink: handle }); send("unread", { count: 3 }); }
+  });
+</script>

@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>nathchatrestsdk demo</title>
+<h1>Host page</h1>
+<p>The NathChat widget floats in the corner. Drag it, collapse it to the icon, open it again.</p>
+<pre id="log"></pre>
+<script src="../dist/nathchatrestsdk.min.js"></script>
+<script>
+  // Demo wiring: points at the MOCK embed (examples/mock-server). In production use your real NathChat origin over https.
+  const chat = NathChat.init({ baseUrl: "http://localhost:8081", allowInsecureLocalhost: true });
+  for (const ev of ["ready", "login", "logout", "unread", "expand", "collapse", "error"]) {
+    chat.on(ev, (d) => (document.getElementById("log").textContent += ev + " " + JSON.stringify(d) + "\n"));
+  }
+</script>

@@ -1,0 +1,51 @@
+{
+  "name": "nathchatrestsdk",
+  "version": "1.0.0",
+  "description": "Browser widget for NathChat: draggable, collapsible chat window with login hosted on the NathChat origin.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/nathchatrestsdk.esm.js",
+  "module": "./dist/nathchatrestsdk.esm.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./dist/nathchatrestsdk.esm.js"
+    },
+    "./browser": "./dist/nathchatrestsdk.min.js"
+  },
+  "files": [
+    "dist",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nathbrok-Digital-Independence/nathchatrestsdk.git"
+  },
+  "keywords": [
+    "nathchat",
+    "nathbrok",
+    "chat",
+    "widget",
+    "sdk"
+  ],
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "test": "node --test",
+    "sri": "node scripts/sri.mjs",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

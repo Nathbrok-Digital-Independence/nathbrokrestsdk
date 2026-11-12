@@ -1,0 +1,68 @@
+name: Publish JavaScript Package
+
+on:
+  push:
+    tags:
+      - "javascript-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+
+      - name: Install locked dependencies
+        working-directory: nathchatrestsdk
+        run: npm ci --ignore-scripts
+
+      - name: Test JavaScript SDK
+        working-directory: nathchatrestsdk
+        run: npm test
+
+      - name: Verify package contents
+        working-directory: nathchatrestsdk
+        run: npm pack --dry-run --json | node scripts/verify-package.js
+
+      - name: Verify release tag and source branch
+        working-directory: nathchatrestsdk
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          node -e "const p=require('./package.json'); const expected='javascript-v'+p.version; if(process.env.RELEASE_TAG!==expected) throw new Error('Expected tag '+expected+', got '+process.env.RELEASE_TAG)"
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/main || {
+            echo "Release tag must point to a commit on main." >&2
+            exit 1
+          }
+
+  publish-to-npm:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+
+      - name: Configure npm for trusted publishing
+        run: |
+          npm install --global npm@11.15.0 --ignore-scripts
+          test "$(npm --version)" = "11.15.0"
+          npm config set registry https://registry.npmjs.org/
+
+      - name: Stage package on npm with provenance
+        working-directory: nathchatrestsdk
+        run: npm stage publish . --access public --provenance
