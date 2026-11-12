@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nathbrok-Digital-Independence/nathbrokrestsdk.git"
+    "url": "https://github.com/Nathbrok-Digital-Independence/nathbrokrestsdk"
   },
   "keywords": [
     "nathchat",
