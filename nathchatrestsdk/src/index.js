@@ -1,7 +1,9 @@
 /*! nathchatrestsdk 1.0.0 | MIT | Browser-only NathChat widget */
+import nathChatIconUrl from "./nathchat-icon.js";
 
 const NS = "nathchat";
 const PROTOCOL_VERSION = 1;
+
 const DEFAULT_BASE_URL = "https://chat.nathbrok.com"; // verify this is your NathChat origin
 const EMBED_PATH = "/sdk/embed/";
 const MARGIN = 8;
@@ -105,7 +107,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff
 .retry{appearance:none;border:2px solid #c9a84c;background:#fff;color:#3d3830;border-radius:8px;padding:6px 14px;font:inherit;cursor:pointer}
 .icon{position:relative;width:56px;height:56px;display:grid;place-items:center;padding:0;border:2px solid #c9a84c;border-radius:50%;background:#3d3830;color:#c9a84c;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 .icon:active{cursor:grabbing}
-.icon svg{width:26px;height:26px;fill:currentColor;pointer-events:none}
+.icon img{width:44px;height:44px;object-fit:contain;pointer-events:none}
 .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#b3261e;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center}
 :focus-visible{outline:3px solid #c9a84c;outline-offset:2px}
 @media (max-width:${FULLSCREEN_MAX_WIDTH}px){
@@ -127,14 +129,11 @@ function el(tag, props = {}, children = []) {
 }
 
 function chatIcon() {
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  const path = document.createElementNS(svgNS, "path");
-  path.setAttribute("d", "M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z");
-  svg.appendChild(path);
-  return svg;
+  const image = document.createElement("img");
+  image.src = nathChatIconUrl;
+  image.alt = "";
+  image.setAttribute("aria-hidden", "true");
+  return image;
 }
 
 /* ---------- widget ---------- */

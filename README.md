@@ -20,7 +20,8 @@ desktop applications.
 
 - **Python** — available in [`python/`](./python/).
 - **JavaScript for Node.js** — available in [`JavaScript/`](./JavaScript/).
-  This is a server-side SDK, not a browser SDK.
+- **JavaScript for Node.js and browsers** — available in [`nathchatrestsdk/`](./nathchatrestsdk/).
+  This is a client-side SDK and works for only NathChat.
 - **.NET / C#** — available in [`dotnet/`](./dotnet/).
 
 ## Possible future languages

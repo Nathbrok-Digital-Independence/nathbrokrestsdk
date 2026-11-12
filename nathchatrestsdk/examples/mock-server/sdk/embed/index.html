@@ -1,23 +1,446 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>MOCK NathChat embed (demo only)</title>
-<style>body{font:14px system-ui;margin:16px}input,button{display:block;margin:8px 0;padding:8px;width:100%}</style>
-<p><strong>DEMO ONLY.</strong> The real login form lives on your NathChat server, never in the host page.</p>
-<form id="f">
-  <input id="n" placeholder="NathLink" autocomplete="username">
-  <input id="s" type="password" placeholder="Secret" autocomplete="current-password">
-  <button>Sign in</button>
-</form>
-<script>
-  const parent = new URLSearchParams(location.search).get("parent");
-  const send = (type, extra = {}) => window.parent.postMessage({ ns: "nathchat", v: 1, type, ...extra }, parent);
-  addEventListener("message", (e) => {
-    if (e.source !== window.parent || e.origin !== parent) return;
-  });
-  send("ready");
-  document.getElementById("f").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const handle = document.getElementById("n").value.trim();
-    if (handle) { send("login", { nathlink: handle }); send("unread", { count: 3 }); }
-  });
-</script>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mock NathChat</title>
+  <style>
+    :root { font: 14px/1.45 system-ui, sans-serif; color: #183128; background: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 14px; }
+    .mock-label { display: inline-flex; padding: 4px 8px; color: #785014; background: #fff1cf; border-radius: 20px; font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    h1 { margin: 10px 0 3px; font-size: 1.2rem; }
+    h2 { margin: 8px 0; font-size: 1rem; }
+    p { color: #60756b; }
+    label { display: grid; gap: 6px; margin: 12px 0; font-size: .83rem; font-weight: 700; }
+    input, textarea { width: 100%; min-height: 39px; padding: 9px 10px; border: 1px solid #cbd9d1; border-radius: 8px; font: inherit; }
+    textarea { min-height: 60px; resize: vertical; }
+    button { min-height: 36px; padding: 7px 10px; color: white; background: #167655; border: 0; border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer; }
+    button.secondary { color: #234338; background: #eaf2ed; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .wide { width: 100%; }
+    .status { min-height: 20px; margin: 10px 0; color: #5d7067; font-size: .82rem; }
+    .error { color: #a8323a; }
+    .chat-head, .thread-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .chat-head { margin: 7px 0 9px; }
+    .account-name { color: #718279; font-size: .74rem; }
+    .room-list { display: grid; gap: 7px; max-height: 365px; overflow: auto; }
+    .room-item { display: grid; gap: 3px; width: 100%; padding: 10px; color: #183128; background: #f7faf8; border: 1px solid #e2ebe5; text-align: left; }
+    .room-item:hover { background: #edf5f0; }
+    .room-title-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .room-person { font-size: .83rem; font-weight: 750; }
+    .room-preview { overflow: hidden; color: #718279; font-size: .74rem; text-overflow: ellipsis; white-space: nowrap; }
+    .unread-badge { min-width: 19px; padding: 1px 5px; color: #fff; background: #167655; border-radius: 20px; font-size: .68rem; text-align: center; }
+    .thread-head { margin: 6px 0 9px; }
+    .thread-title { display: grid; min-width: 0; }
+    .thread-title small { color: #718279; font-size: .73rem; }
+    .message-list { display: grid; align-content: start; gap: 8px; height: 240px; padding: 9px; overflow: auto; background: #f7faf8; border: 1px solid #e5eee8; border-radius: 10px; }
+    .message { max-width: 88%; padding: 8px 10px; background: #e8f0eb; border-radius: 10px 10px 10px 3px; justify-self: start; overflow-wrap: anywhere; }
+    .message.own { color: #fff; background: #167655; border-radius: 10px 10px 3px 10px; justify-self: end; }
+    .message-text { margin: 0; color: inherit; white-space: pre-wrap; }
+    .message-meta { display: block; margin-top: 4px; opacity: .72; font-size: .65rem; }
+    .message-form { display: grid; gap: 7px; margin-top: 8px; }
+    .message-form button { justify-self: end; min-width: 88px; }
+    .debug { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e6eee9; }
+    .debug summary { color: #61766c; cursor: pointer; font-size: .76rem; font-weight: 700; }
+    .trace { max-height: 85px; margin: 7px 0 0; padding: 8px; overflow: auto; color: #dcebe3; background: #1d3027; border-radius: 7px; font-size: .66rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <span class="mock-label">Local mock · fake data only</span>
+  <h1>NathChat</h1>
+  <p id="intro">A local demo account with seeded rooms and messages.</p>
+
+  <section id="sign-in">
+    <form id="login-form">
+      <label>Email<input id="email" type="email" autocomplete="username" required value="contact@example.test"></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" required value="demo-password"></label>
+      <button class="wide" type="submit">Sign in</button>
+      <p class="status" id="login-status" role="status" aria-live="polite"></p>
+    </form>
+    <form id="two-factor-form" hidden>
+      <label>Demo authentication code<input id="two-factor-code" inputmode="numeric" autocomplete="one-time-code" required></label>
+      <button class="wide" type="submit">Verify code</button>
+      <p class="status">Use code 246810.</p>
+      <p class="status error" id="two-factor-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="unlock" hidden>
+    <p>Signed in as <strong id="nathlink"></strong>. Unlock the demo conversations.</p>
+    <form id="unlock-form">
+      <label>Key passphrase<input id="passphrase" type="password" autocomplete="current-password" required value="demo-key"></label>
+      <button class="wide" type="submit">Unlock rooms</button>
+      <p class="status" id="unlock-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="chat-panel" hidden>
+    <div class="chat-head">
+      <div><strong id="chat-heading">Rooms</strong><br><span class="account-name" id="account-name"></span></div>
+      <button class="secondary" id="sign-out" type="button">Sign out</button>
+    </div>
+    <p class="status" id="rooms-status" role="status" aria-live="polite">Loading rooms…</p>
+    <div class="room-list" id="room-list"></div>
+
+    <section id="thread" hidden>
+      <div class="thread-head">
+        <button class="secondary" id="back-to-rooms" type="button">← Rooms</button>
+        <div class="thread-title"><strong id="thread-name"></strong><small id="thread-person"></small></div>
+      </div>
+      <p class="status" id="messages-status" role="status" aria-live="polite"></p>
+      <div class="message-list" id="message-list" aria-live="polite"></div>
+      <form class="message-form" id="message-form">
+        <label for="message-input">Message</label>
+        <textarea id="message-input" maxlength="4000" required placeholder="Write a demo message…"></textarea>
+        <button type="submit" id="send-message">Send message</button>
+      </form>
+    </section>
+  </section>
+
+  <details class="debug">
+    <summary>Mock iframe debug trace</summary>
+    <pre class="trace" id="trace"></pre>
+  </details>
+
+  <script>
+    (() => {
+      const query = new URLSearchParams(location.search);
+      const scenario = query.get("client") || "demo-success";
+      const parentOrigin = query.get("parent") || "";
+      const trace = document.getElementById("trace");
+      const traceEvent = (label) => {
+        const stamp = new Date().toLocaleTimeString();
+        trace.textContent += `[${stamp}] ${label}\n`;
+        trace.scrollTop = trace.scrollHeight;
+      };
+      const isLocalOrigin = (value) => {
+        try {
+          const url = new URL(value);
+          return ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) && ["http:", "https:"].includes(url.protocol);
+        } catch { return false; }
+      };
+      const canMessageParent = window.parent !== window && isLocalOrigin(parentOrigin);
+      const send = (type, fields = {}) => {
+        if (!canMessageParent) return traceEvent(`blocked ${type}: no valid local parent origin`);
+        window.parent.postMessage({ ns: "nathchat", v: 1, type, ...fields }, parentOrigin);
+        traceEvent(`sent ${type}`);
+      };
+      const api = async (path, { method = "GET", body } = {}) => {
+        const response = await fetch(path, {
+          method,
+          credentials: "same-origin",
+          headers: body === undefined ? {} : { "Content-Type": "application/json" },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Mock API returned ${response.status}.`);
+        return result;
+      };
+
+      const signInPanel = document.getElementById("sign-in");
+      const loginForm = document.getElementById("login-form");
+      const loginStatus = document.getElementById("login-status");
+      const twoFactorForm = document.getElementById("two-factor-form");
+      const unlockPanel = document.getElementById("unlock");
+      const unlockForm = document.getElementById("unlock-form");
+      const unlockStatus = document.getElementById("unlock-status");
+      const chatPanel = document.getElementById("chat-panel");
+      const roomList = document.getElementById("room-list");
+      const roomsStatus = document.getElementById("rooms-status");
+      const thread = document.getElementById("thread");
+      const messagesStatus = document.getElementById("messages-status");
+      const messageList = document.getElementById("message-list");
+      const messageForm = document.getElementById("message-form");
+      const messageInput = document.getElementById("message-input");
+      const sendButton = document.getElementById("send-message");
+      let challengeId = "";
+      let user = null;
+      let rooms = [];
+      let activeRoom = null;
+      let activeMessages = [];
+      let signedIn = false;
+
+      const setUnread = (count) => send("unread", { count: Math.max(0, Math.min(9999, count)) });
+      const totalUnread = () => rooms.reduce((total, room) => total + room.unreadCount, 0);
+      const showError = (element, message) => {
+        element.classList.add("error");
+        element.textContent = message;
+      };
+      const resetToLogin = () => {
+        signedIn = false;
+        user = null;
+        rooms = [];
+        activeRoom = null;
+        activeMessages = [];
+        challengeId = "";
+        signInPanel.hidden = false;
+        loginForm.hidden = false;
+        twoFactorForm.hidden = true;
+        unlockPanel.hidden = true;
+        chatPanel.hidden = true;
+        loginForm.reset();
+        document.getElementById("email").value = "contact@example.test";
+        document.getElementById("password").value = "demo-password";
+        document.getElementById("passphrase").value = "demo-key";
+        loginStatus.textContent = "";
+        unlockStatus.textContent = "";
+        setUnread(0);
+      };
+      const acceptLogin = (authenticatedUser) => {
+        signedIn = true;
+        user = authenticatedUser;
+        signInPanel.hidden = true;
+        unlockPanel.hidden = false;
+        document.getElementById("nathlink").textContent = user.nathlink;
+        traceEvent("fake user authenticated in the mock server");
+        send("login", { nathlink: user.nathlink });
+      };
+      const formatTime = (isoTime) => {
+        if (!isoTime) return "";
+        return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(isoTime));
+      };
+      const renderRooms = () => {
+        roomList.replaceChildren();
+        for (const room of rooms) {
+          const button = document.createElement("button");
+          button.className = "room-item";
+          button.type = "button";
+          const top = document.createElement("span");
+          top.className = "room-title-line";
+          const name = document.createElement("span");
+          name.className = "room-person";
+          name.textContent = room.title;
+          top.append(name);
+          if (room.unreadCount > 0) {
+            const badge = document.createElement("span");
+            badge.className = "unread-badge";
+            badge.textContent = String(room.unreadCount);
+            top.append(badge);
+          }
+          const participant = document.createElement("span");
+          participant.className = "account-name";
+          participant.textContent = room.participant;
+          const preview = document.createElement("span");
+          preview.className = "room-preview";
+          preview.textContent = room.preview;
+          button.append(top, participant, preview);
+          button.addEventListener("click", () => openRoom(room.id));
+          roomList.append(button);
+        }
+      };
+      const renderMessages = () => {
+        messageList.replaceChildren();
+        for (const message of activeMessages) {
+          const bubble = document.createElement("article");
+          bubble.className = `message${message.senderId === user.id ? " own" : ""}`;
+          const text = document.createElement("p");
+          text.className = "message-text";
+          text.textContent = message.text;
+          const meta = document.createElement("small");
+          meta.className = "message-meta";
+          meta.textContent = `${message.senderId === user.id ? "You" : activeRoom.participant} · ${formatTime(message.createdAt)}`;
+          bubble.append(text, meta);
+          messageList.append(bubble);
+        }
+        messageList.scrollTop = messageList.scrollHeight;
+      };
+      const loadRooms = async () => {
+        roomsStatus.hidden = false;
+        roomsStatus.classList.remove("error");
+        roomsStatus.textContent = "Loading rooms from the fake database…";
+        roomList.replaceChildren();
+        try {
+          const result = await api("/api/rooms");
+          rooms = result.rooms;
+          renderRooms();
+          roomsStatus.textContent = rooms.length ? `${rooms.length} rooms loaded` : "No rooms found.";
+          setUnread(totalUnread());
+          traceEvent(`loaded ${rooms.length} rooms from the fake database`);
+        } catch (error) {
+          showError(roomsStatus, error.message);
+          traceEvent("room load failed");
+        }
+      };
+      const openRoom = async (roomId) => {
+        activeRoom = rooms.find((room) => room.id === roomId);
+        if (!activeRoom) return;
+        roomList.hidden = true;
+        roomsStatus.hidden = true;
+        thread.hidden = false;
+        document.getElementById("thread-name").textContent = activeRoom.title;
+        document.getElementById("thread-person").textContent = activeRoom.participant;
+        messagesStatus.classList.remove("error");
+        messagesStatus.textContent = "Loading messages…";
+        messageList.replaceChildren();
+        try {
+          const result = await api(`/api/rooms/${encodeURIComponent(roomId)}/messages`);
+          activeMessages = result.messages;
+          await api(`/api/rooms/${encodeURIComponent(roomId)}/read`, { method: "POST", body: {} });
+          rooms = rooms.map((room) => room.id === roomId ? { ...room, unreadCount: 0 } : room);
+          renderRooms();
+          setUnread(totalUnread());
+          renderMessages();
+          messagesStatus.textContent = `${activeMessages.length} messages loaded`;
+          traceEvent(`loaded ${activeMessages.length} messages for ${roomId}`);
+        } catch (error) {
+          showError(messagesStatus, error.message);
+          traceEvent(`message load failed for ${roomId}`);
+        }
+      };
+      const enterChat = async (roomCount) => {
+        unlockPanel.hidden = true;
+        chatPanel.hidden = false;
+        document.getElementById("account-name").textContent = user.displayName;
+        document.getElementById("chat-heading").textContent = "Rooms";
+        roomList.hidden = false;
+        thread.hidden = true;
+        await loadRooms();
+        traceEvent(`unlock complete; ${roomCount} fake rooms available`);
+      };
+      const finishLogout = async () => {
+        try { await api("/api/logout", { method: "POST", body: {} }); }
+        catch { traceEvent("mock logout endpoint was unavailable"); }
+        if (signedIn) send("logout");
+        resetToLogin();
+      };
+      const ready = () => {
+        if (scenario === "demo-no-ready") return traceEvent("ready intentionally withheld for timeout case");
+        if (scenario === "demo-invalid-protocol") {
+          if (canMessageParent) {
+            window.parent.postMessage({ ns: "nathchat", v: 2, type: "ready" }, parentOrigin);
+            traceEvent("sent invalid ready message (protocol version 2)");
+          }
+          return;
+        }
+        send("ready");
+      };
+
+      if (scenario === "demo-no-ready" || scenario === "demo-invalid-protocol") {
+        signInPanel.hidden = true;
+        document.getElementById("intro").textContent = "This connection scenario intentionally withholds a valid ready event. See the mock trace below.";
+      }
+      if (scenario === "demo-delayed-ready") {
+        traceEvent("ready will be sent after three seconds");
+        setTimeout(ready, 3000);
+      } else {
+        ready();
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== window.parent || event.origin !== parentOrigin || !canMessageParent) return;
+        const message = event.data;
+        if (!message || typeof message !== "object" || Array.isArray(message) || message.ns !== "nathchat" || message.v !== 1) return;
+        if (message.type === "init") traceEvent(`received init (theme ${String(message.theme || "auto")})`);
+        if (message.type === "command" && message.name === "logout" && signedIn) void finishLogout();
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        loginStatus.classList.remove("error");
+        loginStatus.textContent = "Checking demo account…";
+        const submit = loginForm.querySelector("button[type=submit]");
+        submit.disabled = true;
+        try {
+          const result = await api("/api/login", {
+            method: "POST",
+            body: {
+              email: document.getElementById("email").value,
+              password: document.getElementById("password").value,
+              scenario,
+            },
+          });
+          if (result.requiresTwoFactor) {
+            challengeId = result.challengeId;
+            loginForm.hidden = true;
+            twoFactorForm.hidden = false;
+            loginStatus.textContent = "";
+            document.getElementById("two-factor-code").focus();
+            traceEvent("fake account requested two-factor verification");
+          } else {
+            loginStatus.textContent = "";
+            acceptLogin(result.user);
+          }
+        } catch (error) {
+          showError(loginStatus, error.message);
+          traceEvent("fake account sign-in was denied");
+        } finally {
+          submit.disabled = false;
+        }
+      });
+
+      twoFactorForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const status = document.getElementById("two-factor-status");
+        status.classList.remove("error");
+        status.textContent = "Checking code…";
+        try {
+          const result = await api("/api/verify-2fa", {
+            method: "POST",
+            body: { challengeId, code: document.getElementById("two-factor-code").value.trim() },
+          });
+          twoFactorForm.hidden = true;
+          acceptLogin(result.user);
+        } catch (error) {
+          showError(status, error.message);
+        }
+      });
+
+      unlockForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        unlockStatus.classList.remove("error");
+        unlockStatus.textContent = "Unlocking demo rooms…";
+        try {
+          const result = await api("/api/unlock", {
+            method: "POST",
+            body: { passphrase: document.getElementById("passphrase").value },
+          });
+          document.getElementById("passphrase").value = "";
+          send("unlocked", { count: result.roomCount });
+          await enterChat(result.roomCount);
+        } catch (error) {
+          showError(unlockStatus, error.message);
+          traceEvent("demo room unlock failed inside the iframe");
+        }
+      });
+
+      document.getElementById("back-to-rooms").addEventListener("click", () => {
+        activeRoom = null;
+        activeMessages = [];
+        thread.hidden = true;
+        roomList.hidden = false;
+        roomsStatus.hidden = false;
+        document.getElementById("chat-heading").textContent = "Rooms";
+      });
+      messageForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text || !activeRoom) return;
+        sendButton.disabled = true;
+        try {
+          const result = await api(`/api/rooms/${encodeURIComponent(activeRoom.id)}/messages`, {
+            method: "POST",
+            body: { text },
+          });
+          activeMessages.push(result.message);
+          messageInput.value = "";
+          renderMessages();
+          const roomResult = await api("/api/rooms");
+          rooms = roomResult.rooms;
+          renderRooms();
+          setUnread(totalUnread());
+          messagesStatus.textContent = `${activeMessages.length} messages loaded`;
+          traceEvent(`saved a demo message in ${activeRoom.id}`);
+        } catch (error) {
+          showError(messagesStatus, error.message);
+        } finally {
+          sendButton.disabled = false;
+        }
+      });
+      document.getElementById("sign-out").addEventListener("click", () => void finishLogout());
+      traceEvent("mock iframe initialized; fake account, rooms, and messages live in the local mock server");
+    })();
+  </script>
+</body>
+</html>

@@ -1,14 +1,182 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>nathchatrestsdk demo</title>
-<h1>Host page</h1>
-<p>The NathChat widget floats in the corner. Drag it, collapse it to the icon, open it again.</p>
-<pre id="log"></pre>
-<script src="../dist/nathchatrestsdk.min.js"></script>
-<script>
-  // Demo wiring: points at the MOCK embed (examples/mock-server). In production use your real NathChat origin over https.
-  const chat = NathChat.init({ baseUrl: "http://localhost:8081", allowInsecureLocalhost: true });
-  for (const ev of ["ready", "login", "logout", "unread", "expand", "collapse", "error"]) {
-    chat.on(ev, (d) => (document.getElementById("log").textContent += ev + " " + JSON.stringify(d) + "\n"));
-  }
-</script>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NathChat SDK local demo</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #183128; background: #f2f7f4; }
+    * { box-sizing: border-box; }
+    body { max-width: 1120px; margin: 0 auto; padding: 42px 24px 90px; }
+    .eyebrow { color: #167655; font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 9px 0 12px; font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.045em; }
+    .lead { max-width: 760px; color: #587067; font-size: 1.08rem; line-height: 1.6; }
+    .warning { margin: 24px 0; padding: 14px 16px; color: #70491a; background: #fff5df; border: 1px solid #f0d9a8; border-radius: 12px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 18px; align-items: start; }
+    .card { padding: 20px; background: #fff; border: 1px solid #dfe9e3; border-radius: 16px; box-shadow: 0 8px 28px #1831280a; }
+    .card h2 { margin: 0 0 8px; font-size: 1.1rem; }
+    .card p { color: #60756b; line-height: 1.5; }
+    label { display: grid; gap: 7px; margin: 14px 0 8px; font-size: .88rem; font-weight: 700; }
+    select, input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #cbd9d1; border-radius: 9px; background: white; color: inherit; font: inherit; }
+    .scenario-note { min-height: 62px; margin: 10px 0 0; color: #61766c; font-size: .88rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    button { min-height: 38px; padding: 8px 12px; color: #234338; background: #eaf2ed; border: 1px solid #d5e4db; border-radius: 9px; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+    button:hover { background: #dcece2; }
+    button.primary { color: white; background: #167655; border-color: #167655; }
+    button.primary:hover { background: #0e6043; }
+    .credentials { padding: 13px; background: #f7faf8; border: 1px solid #e5eee8; border-radius: 10px; font-size: .87rem; line-height: 1.7; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    code { padding: 2px 5px; background: #f1f5f2; border-radius: 4px; }
+    .snippet { overflow: auto; margin: 12px 0 0; padding: 13px; color: #dcebe3; background: #1d3027; border-radius: 10px; font-size: .8rem; line-height: 1.5; }
+    .status-line { display: flex; align-items: center; gap: 9px; margin: 12px 0; color: #5d7067; font-size: .87rem; }
+    .dot { width: 9px; height: 9px; background: #b4c2ba; border-radius: 50%; }
+    .dot.good { background: #1a966b; box-shadow: 0 0 0 4px #1a966b1a; }
+    .log { overflow: auto; height: 300px; margin: 12px 0 0; padding: 12px; color: #d7e9df; background: #15261f; border-radius: 10px; font-size: .77rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .muted { color: #718279; font-size: .81rem; }
+    @media(max-width: 760px) { body { padding: 26px 14px 80px; } .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="eyebrow">NathChat browser SDK</div>
+  <h1>Local integration sandbox</h1>
+  <p class="lead">Try the widget against a mock NathChat embed. Switch between account, key-unlock, and connection scenarios, then inspect the events the host page receives.</p>
+  <div class="warning"><strong>Local mock only.</strong> The mock credentials are fake and handled in the iframe. Never enter a real Nathbrok password or key passphrase here.</div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Choose a user case</h2>
+      <label for="scenario">Mock scenario</label>
+      <select id="scenario">
+        <option value="demo-success">Successful sign-in and key unlock</option>
+        <option value="demo-2fa">Account with two-factor authentication</option>
+        <option value="demo-access-denied">Contact without NathChat access</option>
+        <option value="demo-bad-unlock">Sign-in succeeds, key unlock fails</option>
+        <option value="demo-bad-login">Incorrect email or password</option>
+        <option value="demo-delayed-ready">Embed responds after a delay</option>
+        <option value="demo-no-ready">Embed never becomes ready</option>
+        <option value="demo-invalid-protocol">Embed sends an invalid protocol message</option>
+        <option value="demo-server-error">Embed server returns HTTP 503</option>
+      </select>
+      <p class="scenario-note" id="scenario-note"></p>
+      <div class="status-line"><span class="dot" id="ready-dot"></span><span id="ready-state">Widget connecting</span></div>
+      <div class="controls">
+        <button class="primary" id="restart">Restart scenario</button>
+        <button id="expand">Expand</button>
+        <button id="collapse">Collapse</button>
+        <button id="logout">Ask iframe to sign out</button>
+        <button id="clear-log">Clear log</button>
+      </div>
+      <p class="muted">The host page and mock iframe run on separate local origins so you can inspect cross-origin SDK messaging.</p>
+    </section>
+
+    <section class="card">
+      <h2>Mock credentials</h2>
+      <p>Use these only inside the widget iframe.</p>
+      <div class="credentials">
+        Email: <code>contact@example.test</code><br>
+        Password: <code>demo-password</code><br>
+        Key passphrase: <code>demo-key</code><br>
+        2FA code: <code>246810</code>
+      </div>
+      <h2 style="margin-top:22px">Host page snippet</h2>
+      <pre class="snippet" id="snippet"></pre>
+      <button id="copy-snippet" style="margin-top:10px">Copy snippet</button>
+    </section>
+
+    <section class="card" style="grid-column:1/-1">
+      <h2>SDK event log</h2>
+      <p>Only validated SDK events appear here. Credentials, passphrases, cookies, and keys should never appear.</p>
+      <pre class="log" id="log" aria-live="polite"></pre>
+    </section>
+  </div>
+
+  <script src="/demo-config.js"></script>
+  <script src="/dist/nathchatrestsdk.min.js"></script>
+  <script>
+    (() => {
+      const cases = {
+        "demo-success": "Expected: ready, login, and unlocked. Three rooms and their message histories load from the fake database; unread counts update as you open rooms.",
+        "demo-2fa": "Expected: ready, then login only after the demo one-time code is accepted, followed by unlocked.",
+        "demo-access-denied": "Expected: the mock contact is denied after password verification; no login event reaches the host.",
+        "demo-bad-unlock": "Expected: ready and login, then a key-passphrase error. The host should not receive a key or passphrase.",
+        "demo-bad-login": "Expected: ready followed by a generic sign-in error in the iframe. No login event is emitted.",
+        "demo-delayed-ready": "Expected: ready after a three-second delay, before the SDK connection timeout.",
+        "demo-no-ready": "Expected: the SDK reports a timeout and offers its retry button.",
+        "demo-invalid-protocol": "Expected: the SDK ignores the invalid versioned message and eventually reports a timeout.",
+        "demo-server-error": "Expected: the iframe request returns HTTP 503; the SDK reports that it could not connect.",
+      };
+      const scenario = document.getElementById("scenario");
+      const note = document.getElementById("scenario-note");
+      const log = document.getElementById("log");
+      const readyDot = document.getElementById("ready-dot");
+      const readyState = document.getElementById("ready-state");
+      const snippet = document.getElementById("snippet");
+      const mockOrigin = window.NathChatDemoConfig.mockOrigin;
+      let widget = null;
+      let subscriptions = [];
+
+      const writeLog = (label, detail = {}) => {
+        const time = new Date().toLocaleTimeString();
+        log.textContent += `[${time}] ${label}${Object.keys(detail).length ? ` ${JSON.stringify(detail)}` : ""}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+      const updateDetails = () => {
+        const clientId = scenario.value;
+        note.textContent = cases[clientId];
+        snippet.textContent = `<script src="${location.origin}/dist/nathchatrestsdk.min.js"><\/script>\n<script>NathChat.init({ baseUrl: "${mockOrigin}", allowInsecureLocalhost: true, clientId: "${clientId}" });<\/script>`;
+      };
+      const startWidget = () => {
+        subscriptions.forEach((unsubscribe) => unsubscribe());
+        subscriptions = [];
+        if (widget) widget.destroy();
+        readyDot.classList.remove("good");
+        readyState.textContent = "Widget connecting";
+        updateDetails();
+        try {
+          widget = NathChat.init({
+            baseUrl: mockOrigin,
+            allowInsecureLocalhost: true,
+            clientId: scenario.value,
+            startCollapsed: false,
+            lazy: false,
+            rememberUi: false,
+            title: "NathChat mock",
+          });
+          for (const eventName of ["ready", "login", "logout", "unread", "unlocked", "expand", "collapse", "error"]) {
+            subscriptions.push(widget.on(eventName, (detail) => {
+              writeLog(eventName, detail);
+              if (eventName === "ready") {
+                readyDot.classList.add("good");
+                readyState.textContent = "Iframe ready";
+              }
+              if (eventName === "error") readyState.textContent = `Connection error: ${detail.code}`;
+              if (eventName === "logout") readyState.textContent = "Signed out in iframe";
+            }));
+          }
+          writeLog("scenario started", { clientId: scenario.value, embedOrigin: mockOrigin });
+        } catch (error) {
+          readyState.textContent = "Widget failed to initialize";
+          writeLog("initialization error", { message: error.message });
+        }
+      };
+
+      scenario.addEventListener("change", startWidget);
+      document.getElementById("restart").addEventListener("click", startWidget);
+      document.getElementById("expand").addEventListener("click", () => widget?.expand());
+      document.getElementById("collapse").addEventListener("click", () => widget?.collapse());
+      document.getElementById("logout").addEventListener("click", () => widget?.logout());
+      document.getElementById("clear-log").addEventListener("click", () => { log.textContent = ""; });
+      document.getElementById("copy-snippet").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(snippet.textContent);
+          writeLog("snippet copied");
+        } catch {
+          writeLog("clipboard unavailable; select and copy the snippet manually");
+        }
+      });
+      updateDetails();
+      startWidget();
+    })();
+  </script>
+</body>
+</html>

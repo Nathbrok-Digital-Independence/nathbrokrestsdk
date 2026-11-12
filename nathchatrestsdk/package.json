@@ -1,6 +1,6 @@
 {
   "name": "nathchatrestsdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Browser widget for NathChat: draggable, collapsible chat window with login hosted on the NathChat origin.",
   "license": "MIT",
   "type": "module",
@@ -37,6 +37,7 @@
   ],
   "scripts": {
     "build": "node ./scripts/build.mjs",
+    "demo": "node ./examples/mock-server/server.mjs",
     "test": "node --test",
     "sri": "node scripts/sri.mjs",
     "prepublishOnly": "npm test && npm run build"

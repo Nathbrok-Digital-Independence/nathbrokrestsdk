@@ -60,22 +60,18 @@ This SDK is only half of the feature. NathChat needs an embed route:
 
 ## Host page hardening
 Allow the frame and SDK host in your page CSP: `frame-src https://chat.nathbrok.com; script-src 'self' https://nathbrok.com`.
-The widget uses Shadow DOM and an adopted stylesheet, so it needs no inline styles under a strict CSP.
+The widget uses Shadow DOM and an adopted stylesheet, so it needs no inline styles under a strict CSP. The bundled launcher logo is a data URL; if your page sets a restrictive image policy, allow `data:` in `img-src`.
 
 ## Try it locally
 ```
-npm install && npm run build
-# terminal 1 (the mock "NathChat" at port 8081)
-cd examples/mock-server && python3 -m http.server 8081
-# terminal 2 (a host page at port 8080), from the project root
-python3 -m http.server 8080
-# open http://localhost:8080/examples/index.html
+npm install
+npm run build
+npm run demo
+# open http://127.0.0.1:8080
 ```
-The mock embed is a stand-in that accepts any NathLink. It never checks a secret.
+The demo command starts a host page on port 8080 and a separate mock NathChat iframe server on port 8082. Choose a scenario on the host page to exercise successful sign-in, 2FA, access denial, key-unlock failure, malformed protocol messages, server errors, or SDK timeouts. The mock account (`contact@example.test` / `demo-password`, key passphrase `demo-key`) has three seeded rooms with message histories. After unlock, developers can open rooms, read messages, and send new demo messages. The server stores this fake database in memory, so messages reset when the demo server stops. The host-side event log shows accepted SDK events, and the iframe has its own request trace. These credentials are local fixtures and never authenticate against Nathbrok. Set `HOST_PORT` or `MOCK_PORT` before `npm run demo` if either default port is already in use; the host page picks up the mock origin automatically.
 
-## Tests and publishing
-`npm test` (12 tests: origin checks, message validation, sandbox attributes, no credential inputs in the host DOM, persistence, lifecycle).
-Publish from CI with npm trusted publishing and `npm stage publish`, pinning actions to commit SHAs.
+On Windows PowerShell, use `npm.cmd run demo` if the shell blocks the `npm.ps1` script.
 
 ## Limits
 Third-party cookies are being restricted by browsers, so test login persistence in Safari, Firefox and Chrome.
