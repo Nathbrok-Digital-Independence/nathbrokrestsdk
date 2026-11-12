@@ -38,7 +38,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          node -e "const p=require('./package.json'); const expected='javascript-v'+p.version; if(process.env.RELEASE_TAG!==expected) throw new Error('Expected tag '+expected+', got '+process.env.RELEASE_TAG)"
+          node -e "const p=require('./package.json'); const expected='nathchat-v'+p.version; if(process.env.RELEASE_TAG!==expected) throw new Error('Expected tag '+expected+', got '+process.env.RELEASE_TAG)"
           git merge-base --is-ancestor "$RELEASE_SHA" origin/main || {
             echo "Release tag must point to a commit on main." >&2
             exit 1
