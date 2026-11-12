@@ -63,6 +63,10 @@ jobs:
           test "$(npm --version)" = "11.15.0"
           npm config set registry https://registry.npmjs.org/
 
+      - name: Install locked dependencies
+        working-directory: nathchatrestsdk
+        run: npm ci --ignore-scripts
+
       - name: Stage package on npm with provenance
         working-directory: nathchatrestsdk
         run: npm stage publish . --access public --provenance
