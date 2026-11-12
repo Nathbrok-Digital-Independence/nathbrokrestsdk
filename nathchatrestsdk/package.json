@@ -1,6 +1,6 @@
 {
   "name": "nathchatrestsdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Browser widget for NathChat: draggable, collapsible chat window with login hosted on the NathChat origin.",
   "license": "MIT",
   "type": "module",
