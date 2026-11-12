@@ -25,7 +25,7 @@ const builds = [
     ...input,
     format: "esm",
     target: "es2020",
-    outfile: resolve(packageDir, "dist", "nathchatrestsdk.esm.js"),
+    outfile: resolve(packageDir, "dist", "nathchatsdk.esm.js"),
   }),
   build({
     ...input,
@@ -33,7 +33,7 @@ const builds = [
     globalName: "NathChat",
     minify: true,
     target: "es2020",
-    outfile: resolve(packageDir, "dist", "nathchatrestsdk.min.js"),
+    outfile: resolve(packageDir, "dist", "nathchatsdk.min.js"),
   }),
   build({
     ...input,
@@ -41,11 +41,11 @@ const builds = [
     globalName: "NathChat",
     minify: true,
     target: "es2020",
-    outfile: resolve(repositoryDir, "static", "nathchatrestsdk.js"),
+    outfile: resolve(repositoryDir, "static", "nathchatsdk.js"),
   }),
 ];
 
-// In the full Nathbrok workspace, Django serves the root static bundle from /nathchatrestsdk.js.
+// In the full Nathbrok workspace, Django serves the root static bundle from /nathchatsdk.js.
 const websiteStaticDir = resolve(repositoryDir, "..", "static");
 if (existsSync(websiteStaticDir)) {
   builds.push(build({
@@ -54,7 +54,7 @@ if (existsSync(websiteStaticDir)) {
     globalName: "NathChat",
     minify: true,
     target: "es2020",
-    outfile: resolve(websiteStaticDir, "nathchatrestsdk.js"),
+    outfile: resolve(websiteStaticDir, "nathchatsdk.js"),
   }));
 }
 

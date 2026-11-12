@@ -1,4 +1,4 @@
-/*! nathchatrestsdk 1.0.0 | MIT | Browser-only NathChat widget */
+/*! nathchatsdk 1.0.0 | MIT | Browser-only NathChat widget */
 import nathChatIconUrl from "./nathchat-icon.js";
 
 const NS = "nathchat";
@@ -25,19 +25,19 @@ export function resolveOrigin(baseUrl, { allowedOrigins, allowInsecureLocalhost 
   try {
     url = new URL(baseUrl);
   } catch {
-    throw new Error("nathchatrestsdk: baseUrl is not a valid URL.");
+    throw new Error("nathchatsdk: baseUrl is not a valid URL.");
   }
   if (url.username || url.password) {
-    throw new Error("nathchatrestsdk: baseUrl must not contain credentials.");
+    throw new Error("nathchatsdk: baseUrl must not contain credentials.");
   }
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   const httpsOk = url.protocol === "https:";
   const localHttpOk = allowInsecureLocalhost && local && url.protocol === "http:";
   if (!httpsOk && !localHttpOk) {
-    throw new Error("nathchatrestsdk: baseUrl must use https.");
+    throw new Error("nathchatsdk: baseUrl must use https.");
   }
   if (Array.isArray(allowedOrigins) && !allowedOrigins.includes(url.origin)) {
-    throw new Error("nathchatrestsdk: baseUrl origin is not in allowedOrigins.");
+    throw new Error("nathchatsdk: baseUrl origin is not in allowedOrigins.");
   }
   return url.origin;
 }
@@ -170,7 +170,7 @@ export class NathChatWidget {
 
   constructor(options = {}) {
     if (typeof window === "undefined" || typeof document === "undefined") {
-      throw new Error("nathchatrestsdk runs in the browser only.");
+      throw new Error("nathchatsdk runs in the browser only.");
     }
     this.#o = {
       baseUrl: DEFAULT_BASE_URL,
@@ -194,20 +194,20 @@ export class NathChatWidget {
     };
     const o = this.#o;
     if (!o.container || typeof o.container.appendChild !== "function") {
-      throw new Error("nathchatrestsdk: container must be a DOM element.");
+      throw new Error("nathchatsdk: container must be a DOM element.");
     }
     if (!Number.isFinite(o.width) || !Number.isFinite(o.height) || o.width < 280 || o.height < 360) {
-      throw new Error("nathchatrestsdk: width must be >= 280 and height must be >= 360.");
+      throw new Error("nathchatsdk: width must be >= 280 and height must be >= 360.");
     }
     if (!Number.isFinite(o.offset) || o.offset < 0 || !Number.isFinite(o.zIndex)) {
-      throw new Error("nathchatrestsdk: offset must be non-negative and zIndex must be finite.");
+      throw new Error("nathchatsdk: offset must be non-negative and zIndex must be finite.");
     }
     if (typeof o.clientId !== "string" || o.clientId.length > 256) {
-      throw new Error("nathchatrestsdk: clientId must be a string of at most 256 characters.");
+      throw new Error("nathchatsdk: clientId must be a string of at most 256 characters.");
     }
     this.#origin = resolveOrigin(o.baseUrl, o);
     if (!(o.width >= 280 && o.height >= 360)) {
-      throw new Error("nathchatrestsdk: width must be >= 280 and height >= 360.");
+      throw new Error("nathchatsdk: width must be >= 280 and height >= 360.");
     }
     this.#collapsed = !!o.startCollapsed;
 
@@ -236,8 +236,8 @@ export class NathChatWidget {
   }
 
   on(event, fn) {
-    if (!EVENTS.has(event)) throw new Error(`nathchatrestsdk: unknown event "${event}".`);
-    if (typeof fn !== "function") throw new Error("nathchatrestsdk: listener must be a function.");
+    if (!EVENTS.has(event)) throw new Error(`nathchatsdk: unknown event "${event}".`);
+    if (typeof fn !== "function") throw new Error("nathchatsdk: listener must be a function.");
     if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
     this.#listeners.get(event).add(fn);
     return () => this.#listeners.get(event)?.delete(fn);
@@ -589,7 +589,7 @@ export class NathChatWidget {
         fn(detail);
       } catch (err) {
         // A faulty host callback must not break the widget.
-        if (typeof console !== "undefined") console.error("nathchatrestsdk listener error:", err);
+        if (typeof console !== "undefined") console.error("nathchatsdk listener error:", err);
       }
     }
   }

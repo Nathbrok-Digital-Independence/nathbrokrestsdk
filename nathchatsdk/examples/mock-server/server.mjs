@@ -8,7 +8,7 @@ const serverDir = fileURLToPath(new URL(".", import.meta.url));
 const packageDir = resolve(serverDir, "../..");
 const hostPagePath = resolve(packageDir, "examples", "index.html");
 const embedPagePath = resolve(serverDir, "sdk", "embed", "index.html");
-const bundlePath = resolve(packageDir, "dist", "nathchatrestsdk.min.js");
+const bundlePath = resolve(packageDir, "dist", "nathchatsdk.min.js");
 const hostPort = Number(process.env.HOST_PORT || 8080);
 const mockPort = Number(process.env.MOCK_PORT || 8081);
 const MIME_TYPES = {
@@ -61,7 +61,7 @@ const hostServer = createServer(async (request, response) => {
   if (path === "/" || path === "/examples/" || path === "/examples/index.html") {
     return serveFile(response, hostPagePath);
   }
-  if (path === "/dist/nathchatrestsdk.min.js") {
+  if (path === "/dist/nathchatsdk.min.js") {
     return serveFile(response, bundlePath);
   }
   return reply(response, 404, "Not found");

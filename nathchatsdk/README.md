@@ -1,4 +1,4 @@
-# nathchatrestsdk (browser)
+# nathchatsdk (browser)
 
 A floating NathChat window for websites: draggable, collapsible to an icon, with unread badge.
 Users sign in with their **email and password**, then unlock conversation keys with their separate key passphrase.
@@ -15,16 +15,16 @@ NathLink, logout, unread count).
 
 ## Install
 ```
-npm install nathchatrestsdk
+npm install nathchatsdk
 ```
 ```js
-import { init } from "nathchatrestsdk";
+import { init } from "nathchatsdk";
 const chat = init({ baseUrl: "https://chat.nathbrok.com", clientId: "YOUR_CLIENT_ID" });
 chat.on("login", ({ nathlink }) => console.log("signed in as", nathlink));
 ```
 Script tag hosted by Nathbrok (place it near the end of the page body):
 ```html
-<script src="https://nathbrok.com/nathchatrestsdk.js"></script>
+<script src="https://nathbrok.com/nathchatsdk.js"></script>
 <script>NathChat.init({ baseUrl: "https://chat.nathbrok.com", clientId: "YOUR_CLIENT_ID" });</script>
 ```
 

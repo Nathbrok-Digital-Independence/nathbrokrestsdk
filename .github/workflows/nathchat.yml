@@ -21,19 +21,19 @@ jobs:
           node-version: "24"
 
       - name: Install locked dependencies
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         run: npm ci --ignore-scripts
 
       - name: Test JavaScript SDK
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         run: npm test
 
       - name: Verify package contents
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         run: npm pack --dry-run --json | node scripts/verify-package.js
 
       - name: Verify release tag and source branch
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_SHA: ${{ github.sha }}
@@ -64,9 +64,9 @@ jobs:
           npm config set registry https://registry.npmjs.org/
 
       - name: Install locked dependencies
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         run: npm ci --ignore-scripts
 
       - name: Stage package on npm with provenance
-        working-directory: nathchatrestsdk
+        working-directory: nathchatsdk
         run: npm stage publish . --access public --provenance

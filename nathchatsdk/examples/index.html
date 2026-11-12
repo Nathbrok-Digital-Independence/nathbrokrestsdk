@@ -91,7 +91,7 @@
   </div>
 
   <script src="/demo-config.js"></script>
-  <script src="/dist/nathchatrestsdk.min.js"></script>
+  <script src="/dist/nathchatsdk.min.js"></script>
   <script>
     (() => {
       const cases = {
@@ -123,7 +123,7 @@
       const updateDetails = () => {
         const clientId = scenario.value;
         note.textContent = cases[clientId];
-        snippet.textContent = `<script src="${location.origin}/dist/nathchatrestsdk.min.js"><\/script>\n<script>NathChat.init({ baseUrl: "${mockOrigin}", allowInsecureLocalhost: true, clientId: "${clientId}" });<\/script>`;
+        snippet.textContent = `<script src="${location.origin}/dist/nathchatsdk.min.js"><\/script>\n<script>NathChat.init({ baseUrl: "${mockOrigin}", allowInsecureLocalhost: true, clientId: "${clientId}" });<\/script>`;
       };
       const startWidget = () => {
         subscriptions.forEach((unsubscribe) => unsubscribe());

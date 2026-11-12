@@ -23,18 +23,18 @@ process.stdin.on("end", () => {
     "README.md",
     "LICENSE",
     "index.d.ts",
-    "dist/nathchatrestsdk.esm.js",
-    "dist/nathchatrestsdk.min.js",
+    "dist/nathchatsdk.esm.js",
+    "dist/nathchatsdk.min.js",
   ];
   const missing = required.filter(file => !files.includes(file));
-  const expectedEntrypoint = "./dist/nathchatrestsdk.esm.js";
+  const expectedEntrypoint = "./dist/nathchatsdk.esm.js";
   const invalidEntrypoints = ["main", "module"].filter(
     field => packageJson[field] !== expectedEntrypoint,
   );
   const invalidTypes = packageJson.types !== "./index.d.ts";
   const invalidExports = packageJson.exports?.["."]?.import !== expectedEntrypoint ||
     packageJson.exports?.["."]?.types !== "./index.d.ts" ||
-    packageJson.exports?.["./browser"] !== "./dist/nathchatrestsdk.min.js";
+    packageJson.exports?.["./browser"] !== "./dist/nathchatsdk.min.js";
 
   if (unexpected.length || missing.length || invalidEntrypoints.length || invalidTypes || invalidExports) {
     throw new Error(
